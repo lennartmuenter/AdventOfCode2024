@@ -5,54 +5,73 @@ public class Day9
     public static void Run()
     {
         var input = File.ReadAllText("../../../../csharp/day9.txt");
-        var result = new List<int>();
-        
+        // length value
+        var result = new List<(int,int)>();
         var id = 0;
         for (var i = 0; i < input.Length; i++)
         {
             var val = int.Parse(input[i].ToString());
-            if (i % 2 == 0)
-            {
-                for(var j = 0; j < val; j++)
-                {
-                    result.Add(id);
-                }
-                id++;
-            }
-            else
-            {
-                for (var j = 0; j < val; j++)
-                {
-                    result.Add(-1);
-                }
-            }
+            if (val > 0) result.Add((val, i % 2 == 0 ? id++ : -1));
         }
-        result.ForEach(e =>
+        
+        var part1 = result.ToList();
+        var searchIndex = part1.Count-1;
+        while (searchIndex >= 0)
         {
-            if (e < 0)
+            /*part1.ForEach(e =>
             {
-                Console.Write(". ");
-            }
-            else
+                for (var j = 0; j < e.Item1; j++)
+                {
+                    if (e.Item2 == -1)
+                    {
+                        Console.Write(". ");
+                    }
+                    else
+                    {
+                        Console.Write(e.Item2 + " ");
+                    }
+                }
+            });
+            Console.WriteLine(); */
+            for (var i = 0; i < searchIndex; i++)
             {
-                Console.Write(e + " ");
-            }
-        });
-        Console.WriteLine();
+                if (part1[i].Item2 != -1) continue;
+                if (part1[searchIndex].Item2 == -1) break;
 
-        while (result.Contains(-1))
-        {
-            result[result.IndexOf(-1)] = result[^1];
-            result.RemoveAt(result.Count - 1);
+                if (part1[i].Item1 == 0)
+                {
+                    part1.RemoveAt(i);
+                    searchIndex--;
+                    continue;
+                }
+
+                if (part1[i].Item1 - part1[searchIndex].Item1 < 0) continue;
+                part1[i] = (part1[i].Item1 - part1[searchIndex].Item1, part1[i].Item2);
+                var tmp = part1[searchIndex];
+                part1[searchIndex] = (part1[searchIndex].Item1, -1);
+                part1.Insert(i, tmp);
+                searchIndex++;
+                break;
+            }
+            searchIndex--;
         }
         
-        var sum = 0L;
-        for (var i = 0; i < result.Count; i++)
+        var sumPart1 = 0L;
+        var index = 0;
+        for (var i = 0; i < part1.Count; i++)
         {
-            Console.WriteLine(i * result[i]);
-            sum += i * result[i];
+            if (part1[i].Item2 == -1)
+            {
+                index+= part1[i].Item1;
+                continue;
+            }
+            for (var j = 0; j < part1[i].Item1; j++)
+            {
+                sumPart1 += index * part1[i].Item2;
+                index++;
+            }
         }
         
-        Console.WriteLine(sum);
+        Console.WriteLine(sumPart1);
     }
 }
