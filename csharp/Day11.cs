@@ -4,8 +4,15 @@ public class Day11
 {
     public static void Run()
     {
-        var dict = File.ReadAllText("../../../../csharp/day11.txt").Trim().Split(" ").Select(long.Parse).ToList().ToDictionary(stone => stone, _ => 1L);
-        for (var count = 0; count < 75; count++)
+        var start = File.ReadAllText("../../../../csharp/day11.txt").Trim().Split(" ").Select(long.Parse).ToList().ToDictionary(stone => stone, _ => 1L);
+        Console.WriteLine(Calc(start, 25));
+        Console.WriteLine(Calc(start,75));
+    }
+
+    private static long Calc(Dictionary<long, long> start, int depth)
+    {
+        var dict = start;
+        for (var count = 0; count < depth; count++)
         {
             var newDict = dict.ToDictionary();
             foreach (var stone in dict)
@@ -26,7 +33,6 @@ public class Day11
                     if (newDict.ContainsKey(stone.Key % split)) newDict[stone.Key % split] += stone.Value;
                     newDict.TryAdd(stone.Key % split, stone.Value);
                     newDict[stone.Key] -= stone.Value;
-                    
                 }
                 else
                 {
@@ -37,7 +43,6 @@ public class Day11
             }
             dict = newDict;
         }
-
-        Console.WriteLine(dict.Sum(keyValuePair => keyValuePair.Value));
+        return dict.Sum(keyValuePair => keyValuePair.Value);
     }
 }
