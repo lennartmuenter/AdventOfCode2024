@@ -1,22 +1,36 @@
+using System.Collections.Concurrent;
+using System.Data;
+
 namespace AdventOfCode2024;
 
 public class Day11
 {
-    private static Dictionary<long, (long, long)> _cache = new Dictionary<long, (long, long)>();
+    private static readonly ConcurrentDictionary<long, (long, long)> _cache = new();
+    private static long _count = 0;
     public static void Run()
     {
         var stones = File.ReadAllText("../../../../csharp/day11.txt").Trim().Split(" ").Select(long.Parse).ToList();
-        var count = stones.Select(stone => check(stone, 75)).Sum();
-        Console.WriteLine(count);
+        const int depth = 40;
+        const int chunk = 5;
+        Thread lastThr = null;
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        stones.ForEach(stone =>
+        {
+            var t = new Thread(() => check(stone, chunk, depth - chunk));
+            t.Start();
+            t.Join();
+            lastThr = t;
+        });
+        watch.Stop();
+        Console.WriteLine(_count);
+        Console.WriteLine(watch.ElapsedMilliseconds);
     }
 
-    private static long check(long start, int depth)
+    private static void check(long start, int depth, int remainingDepth)
     {
-        var stones = new List<long>();
-        stones.Add(start);
-        for (var count = 0; count < depth; count++)
+        var stones = new List<long> { start };
+        for (var currentDepth = 0; currentDepth < depth; currentDepth++)
         {
-            Console.WriteLine(count);
             for (var i = 0; i < stones.Count; i++)
             {
                 var length = Math.Floor(Math.Log10(stones[i]) + 1);
@@ -36,7 +50,7 @@ public class Day11
                     var split = (long)Math.Pow(10, length / 2);
                     stones[i] = num / split;
                     stones.Insert(i+1, num % split);
-                    _cache.Add(num, (stones[i], stones[i+1]));
+                    _cache.TryAdd(num, (stones[i], stones[i + 1]));
                     i++;
                 }
                 else
@@ -45,7 +59,16 @@ public class Day11
                 }
             }
         }
-
-        return stones.Count;
+        if (remainingDepth == 0)
+        {
+            _count += stones.Count;
+        }
+        else
+        {
+            stones.ForEach(stone =>
+            {
+                check(stone, depth, remainingDepth - depth);
+            });
+        }
     }
 }
